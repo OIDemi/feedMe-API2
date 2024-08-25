@@ -1,0 +1,22 @@
+*{
+    margin: 0%;
+    padding: 0%;
+    font-family: sans-serif;
+}
+
+
+.search-for-recipes{
+    font-size: 70px;
+}
+
+.recipe-list h5{
+    font-size: 20px;
+}
+
+
+
+
+/*MODAL List*/
+.modal-btn{
+    background-color: #000 !important; 
+}
