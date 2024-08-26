@@ -1,24 +1,22 @@
-import React from 'react'
-import { useState, useEffect } from 'react'
+import React, { useState, useEffect } from 'react'
 import ModalList from './ModalList'
 import fetchMeal from '../data/meals.json'
 
-const url = {fetchMeal}
-const courseMealsList = ['Breakfast', 'Lunch', 'Dinner', 'Dessert']
+const courseMealsList = ['Any', 'Breakfast', 'Lunch', 'Dinner', 'Dessert']
+
 const Recipe = () => {
-  const [meals, setMeals] = useState([]) // To hold the API and meals full list
-  const [isLoading, setIsLoading] = useState(true) // for loading screen
-  const [refreshMeals, setRefreshMeals] = useState([]) // for the clear list function
+  const [meals, setMeals] = useState([]) // Holds the full list of meals
+  const [isLoading, setIsLoading] = useState(true) // For loading screen
+  const [refreshMeals, setRefreshMeals] = useState([]) // For the clear list function
   const [error, setError] = useState(false) // For error screen
   const [search, setSearch] = useState('') // For input
-  const [courseMeals, setCourseMeals] = useState('') //For select tag
-  const [randomMeals, setRandomMeals] = useState(null) // to display random meals
+  const [courseMeals, setCourseMeals] = useState('Any') // For the course meals selection
+  const [randomMeals, setRandomMeals] = useState(null) // To display random meals
 
   useEffect(() => {
     const fetchMeals = async () => {
       try {
         setMeals(fetchMeal)
-        {/**For filtered meals */}
         setRefreshMeals(fetchMeal)
       } catch (error) {
         setError('Error fetching data')
@@ -28,64 +26,94 @@ const Recipe = () => {
     fetchMeals()
   }, [])
 
-  {
-    /**Helps in real time filtering of list instead of having to click submir button on form */
-  }
-  useEffect(() => {
-    const filteredSearch = meals.filter((result) => {
-      return (
-        result.name.toLowerCase().includes(search.toLowerCase()) &&
-        (courseMeals === '' ||
-          result.type.toLowerCase().includes(courseMeals.toLowerCase()))
+  const handleSubmit = (e) => {
+    e.preventDefault()
+    let filteredMeals = []
+
+    if (search !== '') {
+      // Search based on the input value
+      filteredMeals = meals.filter((result) =>
+        result.name.toLowerCase().includes(search.toLowerCase())
       )
-    })
-    setRefreshMeals(filteredSearch)
-  }, [courseMeals, search, meals])
+    } else if (courseMeals !== 'Any') {
+      // Search based on the selected course meal, unless "Any" is selected
+      filteredMeals = meals.filter((result) =>
+        result.type.toLowerCase().includes(courseMeals.toLowerCase())
+      )
+    } else {
+      // If "Any" is selected, show all meals
+      filteredMeals = meals
+    }
+
+    setRefreshMeals(filteredMeals)
+    setSearch('')
+  }
 
   const randomButton = () => {
-    const randomMeals = Math.floor(Math.random() * refreshMeals.length)
-    setRandomMeals(refreshMeals[randomMeals])
+    const randomIndex = Math.floor(Math.random() * refreshMeals.length)
+    setRandomMeals(refreshMeals[randomIndex])
+  }
+  //Clear random Meals
+  const clearButton = () => {
+    setRandomMeals(null)
   }
   return (
     <div>
       <div className="recipe-container mx-9 mt-5">
-        <h4 className=" text-center search-for-recipes">Search for Recipes</h4>
-        <div className="  flex justify-center input-container">
+        <h4 className="text-center search-for-recipes">Search for Recipes</h4>
+        <form
+          className="flex flex-col items-center input-container"
+          onSubmit={handleSubmit}>
           <input
             type="text"
             value={search}
             placeholder="Enter recipe..."
-            className=" px-4 py-2 border border-gray-600 rounded-l-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="px-4 py-2 border border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
             onChange={(e) => setSearch(e.target.value)}
           />
-          <select
-            name="courseMeals"
-            value={courseMeals}
-            onChange={(e) => setCourseMeals(e.target.value)}
-            className="bg-black text-white rounded-r-md">
-            <option value="">Any</option>
-            {courseMealsList.map((meals) => {
-              return <option key={meals}>{meals}</option>
-            })}
-          </select>
-          <button
-            type="button"
-            onClick={randomButton}
-            className="bg-black text-white rounded-md ml-3 p-2">
-            Random Recipe
-          </button>
-        </div>
+          <div className="flex flex-wrap justify-center mt-4">
+            {courseMealsList.map((mealType) => (
+              <label key={mealType} className="mr-4">
+                <input
+                  type="radio"
+                  name="courseMeals"
+                  value={mealType}
+                  checked={courseMeals === mealType}
+                  onChange={(e) => setCourseMeals(e.target.value)}
+                  className="mr-1"
+                />
+                {mealType}
+              </label>
+            ))}
+          </div>
+          <div className="mt-4">
+            <button
+              type="submit"
+              className="bg-black text-white rounded-md p-2 mr-2">
+              Search
+            </button>
+            <button
+              type="button"
+              onClick={randomButton}
+              className="bg-black text-white rounded-md p-2 mr-2">
+              Random Recipe
+            </button>
+            <button
+              type="button"
+              onClick={clearButton}
+              className="bg-[#FF0000] text-white rounded-md p-2">
+              Clear
+            </button>
+          </div>
+        </form>
         {isLoading ? (
           <p className="text-center">Loading...</p>
         ) : refreshMeals.length === 0 ? (
-          <p className="text-center mt-20 text-[30px]">
-            Receipe not available.
-          </p>
+          <p className="text-center mt-20 text-[30px]">Recipe not available.</p>
         ) : (
           <>
-            {' '}
             {randomMeals && (
-              <div className=" mt-8 p-4 border text-center border-orange-800">
+              <div className="mt-8 p-4 border text-center border-orange-800">
                 <h5>{randomMeals.name}</h5>
                 <p>{randomMeals.type}</p>
                 <ModalList ingredients={randomMeals.ingredients} />
@@ -99,7 +127,6 @@ const Recipe = () => {
                     <div className="border-orange-800 border rounded-md m-3 text-center">
                       <h5>{name}</h5>
                       <p>{type}</p>
-                      {/**To turn it into a list */}
                       <ModalList ingredients={ingredients} />
                     </div>
                   </div>
